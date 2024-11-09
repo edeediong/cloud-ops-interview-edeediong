@@ -27,7 +27,7 @@ git clone https://github.com/edeediong/cloud-ops-interview-edeediong
 cd cloud-ops-interview-edeediong
 ```
 
-2. Create a `servers.txt` file in the project root directory with your server endpoints:
+2. Copy the `servers.txt` file in the Google Drive to the root directory:
 
 ```text
 server-0001.cloud-ops-interview.sgdev.org
