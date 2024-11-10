@@ -8,8 +8,11 @@ import (
 
 // Config holds all configuration settings
 type Config struct {
-	HTTPTimeout    time.Duration
-	RequestDelay   time.Duration
+	// HTTPTimeout defines the maximum duration for HTTP requests
+	HTTPTimeout time.Duration
+	// RequestDelay defines the delay between consecutive requests
+	RequestDelay time.Duration
+	// MaxConcurrency defines the maximum number of concurrent operations
 	MaxConcurrency int
 }
 
