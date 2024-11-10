@@ -5,16 +5,17 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 )
 
 // Mock response for the /healthz endpoint
 var mockResponse = `{
-	"application": "Memcache2",
-	"version": "1.0.1",
-	"uptime": 4637719417,
-	"requestCount": 5194800029,
-	"errorCount": 1042813251,
-	"successCount": 4151986778
+    "application": "Memcache2",
+    "version": "1.0.1",
+    "uptime": 4637719417,
+    "requestCount": 5194800029,
+    "errorCount": 1042813251,
+    "successCount": 4151986778
 }`
 
 // Test reading servers list from file
@@ -50,6 +51,42 @@ func TestReadServersList(t *testing.T) {
 	}
 }
 
+// Test configuration loading
+func TestLoadConfigFromEnv(t *testing.T) {
+	// Test default configuration
+	defaultConfig := NewDefaultConfig()
+	if defaultConfig.HTTPTimeout != defaultHTTPTimeout {
+		t.Errorf("Expected default HTTP timeout %v, got %v", defaultHTTPTimeout, defaultConfig.HTTPTimeout)
+	}
+	if defaultConfig.RequestDelay != defaultRequestDelay {
+		t.Errorf("Expected default request delay %v, got %v", defaultRequestDelay, defaultConfig.RequestDelay)
+	}
+	if defaultConfig.MaxConcurrency != defaultMaxConcurrency {
+		t.Errorf("Expected default max concurrency %d, got %d", defaultMaxConcurrency, defaultConfig.MaxConcurrency)
+	}
+
+	// Test environment variable configuration
+	os.Setenv("HTTP_TIMEOUT", "15")
+	os.Setenv("REQUEST_DELAY", "500")
+	os.Setenv("MAX_CONCURRENCY", "3")
+	defer func() {
+		os.Unsetenv("HTTP_TIMEOUT")
+		os.Unsetenv("REQUEST_DELAY")
+		os.Unsetenv("MAX_CONCURRENCY")
+	}()
+
+	config := LoadConfigFromEnv()
+	if config.HTTPTimeout != 15*time.Second {
+		t.Errorf("Expected HTTP timeout 15s, got %v", config.HTTPTimeout)
+	}
+	if config.RequestDelay != 500*time.Millisecond {
+		t.Errorf("Expected request delay 500ms, got %v", config.RequestDelay)
+	}
+	if config.MaxConcurrency != 3 {
+		t.Errorf("Expected max concurrency 3, got %d", config.MaxConcurrency)
+	}
+}
+
 // Mock server to simulate /healthz endpoint
 func setupMockServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -63,8 +100,8 @@ func TestFetchHealthData(t *testing.T) {
 	server := setupMockServer()
 	defer server.Close()
 
-	// Pass the full URL with "http://"
-	data, err := fetchHealthData(server.URL)
+	config := NewDefaultConfig()
+	data, err := fetchHealthData(server.URL, config.HTTPTimeout)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -113,11 +150,14 @@ func TestFetchHealthDataWithDelayAndConcurrency(t *testing.T) {
 
 	// Use the full mock server URL
 	for i := 0; i < 3; i++ {
-		servers = append(servers, mockServer.URL) // No manual protocol prefix
+		servers = append(servers, mockServer.URL)
 	}
 
+	config := NewDefaultConfig()
+	config.MaxConcurrency = 2 // Set concurrency to 2 for testing
+
 	dataChannel := make(chan AggregatedData, len(servers))
-	go fetchHealthDataWithDelayAndConcurrency(servers, dataChannel, 2) // Concurrency set to 2
+	go fetchHealthDataWithDelayAndConcurrency(servers, dataChannel, config)
 
 	var result []AggregatedData
 	for data := range dataChannel {
