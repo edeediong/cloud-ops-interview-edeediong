@@ -56,6 +56,21 @@ The program will:
 3. Display an aggregated report to stdout
 4. Save a detailed JSON report to `report.json`
 
+## Configuration
+
+The following parameters can be adjusted using environment variables:
+
+- `MAX_CONCURRENCY`: Maximum number of concurrent requests (default: 5)
+- `HTTP_TIMEOUT`: Request timeout duration (default: 10 seconds)
+- `REQUEST_DELAY`: Delay between requests (default: 200ms)
+
+And to run the code using the custom values, you run the following command:
+
+```bash
+# Run with custom settings
+HTTP_TIMEOUT=15 REQUEST_DELAY=500 MAX_CONCURRENCY=10 go run .
+```
+
 ## Running Tests
 
 To run all tests:
@@ -72,14 +87,6 @@ The test suite includes:
 - Rate limiting and concurrency handling
 
 > **NOTE**: As at the time of writing this, the test coverage is 56.4% of statements.
-
-## Configuration
-
-The following parameters can be adjusted in `main.go`:
-
-- `maxConcurrency`: Maximum number of concurrent requests (default: 5)
-- HTTP client timeout: Request timeout duration (default: 10 seconds)
-- Request delay: Delay between requests (default: 200ms)
 
 ## Output Formats
 
